@@ -11,6 +11,7 @@ db = firestore.client()
 
 data = []
 titles = []
+base_url = "https://books.toscrape.com"
 
 # for formatting title according to url
 def convert_text(text):
@@ -18,6 +19,12 @@ def convert_text(text):
   formatted_string = formatted_string.replace(" ", "-")
   formatted_string = re.sub(r'[^\w\s-]', '', formatted_string)
   return formatted_string
+
+def convert_to_absolute_url(base_url, relative_url):
+  path_segments = relative_url.split("/")
+  clean_path_segments = [segment for segment in path_segments if segment != ".."]
+  absolute_url = "/".join([base_url] + clean_path_segments)
+  return absolute_url
 
 # getting titles for making urls
 def getTitles(url):
@@ -48,7 +55,11 @@ def getCompleteBooksData(url):
     # availibility
     second_last_tr = all_trs[-2] if all_trs and len(all_trs) >= 2 else None
     availibility = second_last_tr.find("td")
-    book = {"bookId": bookId.string, "title": fetched_title.string, "price": price.string, "description": description.string, "availibility": availibility.string}
+    # image url
+    img_tag = soup.find('img')
+    src = img_tag.get('src')
+    url = convert_to_absolute_url(base_url, src)
+    book = {"bookId": bookId.string, "title": fetched_title.string, "price": price.string, "description": description.string, "availibility": availibility.string, "imgUrl": url}
     data.append(book)
 
 for i in range(1,3):
